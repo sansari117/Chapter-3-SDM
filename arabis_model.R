@@ -1,3 +1,14 @@
+# This workflow runs a species distribution modeling (SDM) pipeline using biomod2 for a given environmental scenario (eco). 
+# For each scenario, a pre-formatted Biomod dataset is loaded, and repeated 5-fold cross-validation (10 repetitions) 
+# is defined using a user-specified CV table to ensure consistent model evaluation.
+
+# Multiple modeling algorithms (GLM, GAM, GBM, Random Forest, XGBoost, ANN, FDA) are then trained in parallel
+# using optimized settings and evaluated using TSS and ROC metrics. Finally, individual models are combined 
+# into ensemble predictions (mean, median, weighted mean, and coefficient of variation), 
+# retaining only high-performing models (TSS ≥ 0.8). Both individual model outputs and ensemble results 
+# are saved for downstream analysis.
+
+
 library(biomod2)
 library(caret)
 library(gam)
