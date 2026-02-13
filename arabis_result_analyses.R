@@ -2,8 +2,9 @@
 ###################         RESULT ANALYSES  ##############################
 
 # to analyze the results, we have to set the same directory as of .RData output
-library(biomod2)
 setwd('/Users/sansari/MPIPZ/netscratch-1/irg/grp_hancock/Shifa/sdm_arabis/sdm_38475_buf2degdiff_soil//')
+
+library(biomod2)
 myBiomodModelOut<-get(load('myBiomodModelOut_alp_soil_38475_buf2degdiff.RData'))
 get_built_models(myBiomodModelOut, full.name = NULL, PA = NULL, run = NULL, algo = NULL)
 myBiomodModelOut
@@ -108,6 +109,7 @@ ggplot(data=response$tab,aes(x = expl.val, y = pred.val,color = pred.name)) +
 ####################################      ENSEMBLES         ##################################################
   
 # to analyze the results, we have to set the same directory as of .RData output
+
 library(biomod2)
   
 #########  GET ALL THE CLIMATE OBJECTS
@@ -164,6 +166,7 @@ ggplot(result, aes(x = expl.var, y = mean.var.imp)) +
                                    size = 10),
         axis.text.y = element_text(face = "bold", color="black", 
                                    size = 10))
+
 
 library(patchwork)
 # Specify layout with plot_layout
