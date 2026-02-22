@@ -1,4 +1,3 @@
-
 ###################         RESULT ANALYSES  ##############################
 
 # to analyze the results, we have to set the same directory as of .RData output

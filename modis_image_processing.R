@@ -9,13 +9,16 @@ opts_file <- file.path("/netscratch/irg/grp_hancock/Shifa/latitudinal_clusters/l
 MODIStsp(gui = FALSE, opts_file = opts_file, verbose = FALSE)
 
 ###################       READ AND ANALYZE 506 RASTERS FROM THE YEAR 2002 to 2012 (8-day data)   #######################
+
 setwd("/Volumes/MY_HARD_DRI/vector1et/")
+
 library(raster)
 files<- list.files(pattern = ".tif", full.names = F)
 znames = as.Date(c()) # empty dataframe to store the dates in the format for eg., '2002-03-23'
 s<-stack() # empty stack to store the rasters 
 
 s
+
 # loop over 8-day files and attach the date to the respective raster
 for (file in files) { 
   year_doy<-as.numeric(substr(file,26,32)) #get the doy from filename
@@ -26,10 +29,12 @@ for (file in files) {
   s <- stack(s,r)
   
 }
+
 s
 s<-setZ(s,znames) # attach the dates vector to raster layers
 
 m<-stack()
+
 for (month_name in month.name){  #here month.name is a vector of months from january to december
   print(month_name)
   tryCatch({
@@ -50,7 +55,9 @@ names(m) <- c("January","February","March","April","May","June","July","August",
 m_spat<-terra::rast(m)
 writeRaster(m_spat, paste0('vector1',names(m_spat), ".tif"))
 
+
 ############### USING Raster- ATTACH DATES VIA LIST AND LOOP USING TERRA to calculate monthly means
+
 library(raster)
 znames = as.Date(c()) # empty dataframe to store the dates in the format for eg., '2002-03-23'
 s<-list()
@@ -92,6 +99,7 @@ znames = as.Date(c()) # empty dataframe to store the dates in the format for eg.
 s<-stack() # empty stack to store the rasters 
 
 s
+
 # loop over 8-day files and attach the date to the respective raster
 for (file in files) { 
   year_doy<-as.numeric(substr(file,35,41)) #get the doy from filename
@@ -101,8 +109,12 @@ for (file in files) {
   znames = c(znames, mydate)
   s <- stack(s,r)
 }
+
 s
+
 s<-setZ(s,znames)
+
+
 # Subset layers corresponding to the current month
 month_layers <- s[[which(months(getZ(s)) == 'September')]]
 month_mean <- mean(month_layers, na.rm = TRUE)
@@ -129,7 +141,11 @@ names(m1)<- 'October'
 
 writeRaster(m1, paste0('October','_et', ".tif"))
 
+
+
 ############### MEAN, MAX, MIN OF THE RASTERS FROM JAN TO DEC ##################
+
+
 setwd("/Users/sansari/MPIPZ/netscratch-1/irg/grp_hancock/Shifa/vars_30s/mod11a2v61_lst_night_2002_2012/")
 files<- list.files(pattern = ".tif", full.names = F)
 s<-terra::rast(files)
@@ -143,11 +159,14 @@ terra::writeRaster(et_max,filename = "unt/et_max_resampled_name.tif")
 
 
 ############# MODE OF VALUES
+
 setwd("/Volumes/MY_HARD_DRI/mcd12q1_igbp_lctype1/LandCover_Type_Yearly_500m_v61/LC1")
 files<- list.files(pattern = ".tif", full.names = F)
 s<-terra::rast(files)
 
 terra::modal(s, ties="first", na.rm=T, filename="MCD12Q1_LC1_2002_2012.tif")
+
+
 
 ########################## RESAMPLE AND RENAME #################
 
@@ -175,6 +194,8 @@ for (file in fnames) {
 
 
 ########################## CLIPPING #################
+
+
 library(terra)
 r <- rast()
 ext(r) <- c(-180, 180, -60, 80)
@@ -211,6 +232,7 @@ for (i in 1:nlyr(r)) {
   writeRaster(r[[i]], paste0("fut_", names(r[[i]]), ".tif"))
 }
 
+
 ##########
 library(terra)
 logo <- rast(system.file("ex/logo.tif", package="terra"))   
@@ -229,6 +251,7 @@ plot(x)
 ############################ GETTING SOIL DATA AND DAYLENGTH ########################
 
 library(ggpubr)
+
 soil_plt<-soil %>% na.omit()
 
 
@@ -242,7 +265,9 @@ d <- sapply(1:365, function(i) daylength(lat, i))
 values(r) <- rep(d, each=ncol(r))
 
 
+
 #######################
+
 library(doParallel)
 library(foreach)
 # Set the number of cores to use for parallel processing
