@@ -1,10 +1,79 @@
-###################         RESULT ANALYSES  ##############################
+###################         TOPO AND SOIL  ##############################
 
 # to analyze the results, we have to set the same directory as of .RData output
-setwd('/Users/sansari/MPIPZ/netscratch-1/irg/grp_hancock/Shifa/sdm_arabis/sdm_38475_buf2degdiff_soil//')
+setwd('/Users/sansari/MPIPZ/netscratch-1/irg/grp_hancock/Shifa/sdm_arabis/sdm_38475_buf2degdiff_toponew/toponew/')
 
 library(biomod2)
-myBiomodModelOut<-get(load('myBiomodModelOut_alp_soil_38475_buf2degdiff.RData'))
+library(dplyr)
+
+myBiomodModelOut<-get(load('myBiomodModelOut_alp_toponew_38475_buf2degdiff.RData'))
+get_built_models(myBiomodModelOut, full.name = NULL, PA = NULL, run = NULL, algo = NULL)
+myBiomodModelOut
+get_options(myBiomodModelOut)
+
+
+# VARIABLE IMPORTANCE
+imp_vars<-get_variables_importance( myBiomodModelOut) 
+# "XGBOOST","FDA","ANN","GBM","GLM","GAM"
+
+imp_vars$var.imp<-imp_vars$var.imp *100
+
+library(ggplot2)
+
+p<-ggplot(imp_vars, aes(x = expl.var, y = var.imp)) +
+  geom_boxplot(width = 0.55) +
+  geom_jitter(width = 0.12, alpha = 0.08, size = 1) +
+  scale_y_continuous(breaks = seq(0, 100, by = 20)) +
+  coord_cartesian(ylim = c(0, 100)) +   # zoom without dropping
+  
+  # for topo
+  scale_x_discrete(labels = c("elev" = "elevation", "TPI" = "position index","TRI" = "ruggedness index")) +
+  
+  # for soil
+  #scale_x_discrete(labels = c("cfvo15" = "coarse fragments", "clay15" = "clay","nitrogen15" = "nitrogen","phh2o15" = "ph","silt15" = "silt")) +
+  
+  labs(x = " ", y = "Importance (%)") +
+  theme_classic(base_size = 9) +
+  theme( 
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.7),
+    axis.ticks = element_line(linewidth = 0.7),
+    axis.ticks.length = unit(1.5, "mm"),
+    
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x  = element_text(margin = margin(t = 4),size = 8),
+    axis.text.y  = element_text(size = 8),
+    
+  )
+
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/varimp_topo_alpina.pdf",plot = p, width = 120, height = 100, units = "mm", device = cairo_pdf)
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/varimp_soil_alpina.pdf",plot = p, width = 100, height = 100, units = "mm", device = cairo_pdf)
+
+
+
+metrics<-get_evaluations(myBiomodModelOut)
+
+alp_soil_metrics<- get_evaluations(myBiomodModelOut)%>%
+  filter(metric.eval %in% c("TSS", "ROC")) %>%
+  mutate(species = "alpina")
+
+alp_topo_metrics<- get_evaluations(myBiomodModelOut)%>%
+  filter(metric.eval %in% c("TSS", "ROC")) %>%
+  mutate(species = "alpina")
+
+
+
+
+
+############################## RESULT ANALYSES. #############################################
+# to analyze the results, we have to set the same directory as of .RData output
+setwd('/Users/sansari/MPIPZ/netscratch-1/irg/grp_hancock/Shifa/sdm_arabis/sdm_38475_buf2degdiff_toponew/toponew//')
+
+library(biomod2)
+
+myBiomodModelOut<-get(load('myBiomodModelOut_alp_topo_38475_buf2degdiff.RData'))
 get_built_models(myBiomodModelOut, full.name = NULL, PA = NULL, run = NULL, algo = NULL)
 myBiomodModelOut
 get_options(myBiomodModelOut)
@@ -15,6 +84,7 @@ imp_vars<-get_variables_importance( myBiomodModelOut)
 imp_vars$var.imp<-imp_vars$var.imp *100
 
 imp_vars<- imp_vars %>% filter(algo != 'ANN')
+
 # VARIABLE IMPORTANCE
 #library(ggplot2)
 ggplot(imp_vars, aes(x = expl.var, y = var.imp)) +
@@ -36,8 +106,8 @@ p1 + p2 + p3 + p4 + p5 + p6 + p7 + plot_layout(ncol = 3)
 
 metrics<-get_evaluations(myBiomodModelOut)
 
-library(dplyr)
-metrics %>% filter(metric.eval=='TSS'& algo %in% c("XGBOOST","RF","FDA","ANN","GBM","GLM","GAM")) %>%
+library(ggplot2)
+metrics %>% dplyr::filter(metric.eval=='TSS'& algo %in% c("XGBOOST","RF","FDA","ANN","GBM","GLM","GAM")) %>%
   ggplot(aes(x = algo, y = validation)) +
   geom_boxplot() +
   theme()+
@@ -52,9 +122,19 @@ metrics %>% filter(metric.eval=='TSS'& algo %in% c("XGBOOST","RF","FDA","ANN","G
         axis.text.y = element_text(color="black", 
                                    size=9))
 
+
 alp_metrics<- get_evaluations(myBiomodModelOut)%>%
   filter(metric.eval=='TSS') %>%
   select(full.name,algo,validation)
+
+alp_soil_metrics<- get_evaluations(myBiomodModelOut)%>%
+  filter(metric.eval %in% c("TSS", "ROC")) %>%
+  mutate(species = "alpina")
+
+alp_topo_metrics<- get_evaluations(myBiomodModelOut)%>%
+  filter(metric.eval %in% c("TSS", "ROC")) %>%
+  mutate(species = "alpina")
+
 
 library(dplyr)
 metrics %>% filter(algo =='XGBOOST'& metric.eval %in% c("ACCURACY","BOYCE","KAPPA","ROC","TSS") ) %>%
@@ -192,21 +272,25 @@ for (i in 1:15) {
   combined_metrics <- rbind(combined_metrics, metrics)
 }
 
-# specify the order
-combined_metrics$eco_id <- factor(
-  combined_metrics$eco_id,
-  levels = c("eco1","eco2","eco3","eco4","eco5",
-             "eco6","eco7","eco8","eco9","eco10","eco11","eco12","eco13","eco14","eco15"))
+# # specify the order
+# combined_metrics$eco_id <- factor(
+#   combined_metrics$eco_id,
+#   levels = c("eco1","eco2","eco3","eco4","eco5",
+#              "eco6","eco7","eco8","eco9","eco10","eco11","eco12","eco13","eco14","eco15"))
+
 # check the data
 head(combined_metrics)
 
 
 # to plot the boxplot of all models -> alp_tha.R
-alp_metrics<-combined_metrics %>% filter(metric.eval == "TSS" & algo == "EMmean")
+alp_metrics<-combined_metrics %>%
+  filter(metric.eval %in% c("TSS","ROC"),
+         algo == "EMmean") %>%
+  mutate(species = "alpina")
 
 
 # EMmean: Mean of probabilities over the selected models
-ggplot(combined_metrics %>% filter(metric.eval == "TSS" & algo == "EMmean"),
+ggplot(combined_metrics %>% filter(metric.eval == "ROC" & algo == "EMmean"),
        aes(x = eco_id, y = calibration)) +
   geom_point(size=4, color="darkblue") +
   theme()+

@@ -154,74 +154,7 @@ for(varR in var_names){
 
 
 
-#######################################      KS TEST #########################################
 
-var_names<-tha %>% select(!c(ID:Polygon)) %>% colnames()
-for (col_name in var_names) {
-  alp_1<-alp%>% select(col_name) %>% tidyr::drop_na()
-  tha_1<-tha%>% select(col_name) %>% tidyr::drop_na()
-  png(paste0(col_name, ".png"),res = 100)
-  plot(ecdf(alp_1[[col_name]]), # add line for alpina
-     xlim = range(c(alp_1[[col_name]], tha_1[[col_name]])), 
-     col = "blue",
-     lwd = 2,
-     main = paste("CDF Plot for", col_name),
-     ylab = 'Cumulative Probability',
-     xlab = col_name)
-  plot(ecdf(tha_1[[col_name]]), # add line for thaliana
-     add = TRUE,
-     col = "red",
-     lwd = 1)
-  # Add legend to the plot
-  legend("bottomright", 
-         legend = c("alp", "tha"), 
-         col = c("blue", "red"), 
-         lty = c(1, 1))
-  ks_result <- ks.test(alp_1[[col_name]], tha_1[[col_name]])
-  # Add KS test result to the plot
-  ks_text <- paste("KS Test: p-value =", format.pval(ks_result$p.value), 
-                   "\nD-statistic =", format(ks_result$statistic, digits = 3))
-  text(x = mean(range(c(alp_1[[col_name]], tha_1[[col_name]]))), 
-       y = 0.5, 
-       labels = ks_text, 
-       cex = 0.8, 
-       col = "black", 
-       adj = 0)
-  dev.off()
-}
-
-#################            PLOTTING SOIL DATA         #######################
-colnames(analysisData)
-
-# Example: Histograms for the 2 species
-ggplot(analysisData, aes(x = elev, fill = Species)) +
-  geom_histogram(position = "identity", alpha = 0.5, bins = 50) +  # Position "identity" keeps both histograms
-  labs(title = "",
-       x = "Elevation", # cm³/dm³
-       y = "") +
-  scale_fill_manual(values = c("skyblue", "red")) +  # Custom colors for the species
-  theme_classic()+
-  theme(
-    axis.title.x = element_text(size = 13, face = "bold"),  # Increase x-axis label size and make it bold
-    #axis.title.y = element_text(size = 14, face = "bold"),  # Increase y-axis label size and make it bold
-    axis.text.x = element_text(size = 11, color = "black"), # Increase x-axis ticks size and set color
-    axis.text.y = element_text(size = 11, color = "black")  # Increase y-axis ticks size and set color
-  )
-
-# Example: 
-ggplot(analysisData %>% filter(Species == "Arabis alpina"), aes(x = bio_9, y= bio_17,color =Species)) +
-  geom_point(alpha=0.3, size =3) + 
-  scale_color_manual(values = c("blue", "orange")) +
-  labs(title = "",
-       x = "", # cm³/dm³
-       y = "") +
-  theme_classic()+
-  theme(
-    axis.title.x = element_text(size = 13, face = "bold"),  # Increase x-axis label size and make it bold
-    #axis.title.y = element_text(size = 14, face = "bold"),  # Increase y-axis label size and make it bold
-    axis.text.x = element_text(size = 11, color = "black"), # Increase x-axis ticks size and set color
-    axis.text.y = element_text(size = 11, color = "black")  # Increase y-axis ticks size and set color
-  )
 
 ##############################        SELECTING COMMON FILES IN 2 FOLDERS     ##################################
 
@@ -258,93 +191,547 @@ print(common_files)
 #ndvi_min
 #ndvi_max
 
-###########################################        BIOMOD RESULTS       #############################################
+###########################################        CLIMATE METRICS       #############################################
 
 # emsemble model plots for thaliana and alpina
-head(alp_metrics)
-head(tha_metrics)
+head(alp_eco_metrics)
+head(tha_eco_metrics)
 
-metrics_result<-rbind(alp_metrics, tha_metrics)
+metrics_eco_result<-rbind(alp_eco_metrics, tha_eco_metrics)
 
-# Check normality for A. thaliana
-shapiro.test(metrics_result$calibration[metrics_result$full.name == "arabidopsis_EMmeanByTSS_mergedData_mergedRun_mergedAlgo"])
+head(alp_extreme_metrics)
+head(tha_extreme_metrics)
 
-# Check normality for A. alpina
-shapiro.test(metrics_result$calibration[metrics_result$full.name == "arabis_EMmeanByTSS_mergedData_mergedRun_mergedAlgo"])
-
-#If the p-value from the Shapiro-Wilk test is < 0.05, the data is not normally distributed.
-# If the data is normal we can proceed with t-test
-t_test<-t.test(calibration ~ full.name, data = metrics_result, paired=T)
-p_value <- t_test$p.value
-
-# If the data is NOT normal we can proceed with wilcox test
-wilcox_test<-wilcox.test(calibration ~ full.name, data = metrics_result, paired=T)
-p_value <- wilcox_test$p.value
-
-# now plot with p value from t test
-
-ggplot(metrics_result, aes(x = full.name, y = calibration)) +
-  geom_boxplot() +
-  geom_jitter(alpha=0.5, colour='blue') +
-  theme_minimal()+
-  scale_x_discrete(labels = c("arabis_EMmeanByTSS_mergedData_mergedRun_mergedAlgo" = "A. alpina", "arabidopsis_EMmeanByTSS_mergedData_mergedRun_mergedAlgo" = "A. thaliana")) +
-  scale_y_continuous(limits = c(0.5, 1),breaks=seq(0.5,1,0.25)) +
-  labs(
-    title = "",
-    x = "",
-    y = "") +
-  theme(axis.text.x = element_text(hjust = 1,
-                                   face = "bold", color="black", 
-                                   size = 10),
-        axis.text.y = element_text(face = "bold", color="black", 
-                                   size = 10))+
-  annotate("text", x = 1.5, y = 0.7, label = paste0("Paired wilcox-test,\np = ", round(p_value, 4)), size = 4)
+metrics_extreme_result<-rbind(alp_extreme_metrics, tha_extreme_metrics)
 
 
-# topo and soil
-head(alp_metrics)
-head(tha_metrics)
+library(dplyr)
 
-alp_metrics$Species<-"A. alpina"
-tha_metrics$Species<-"A. thaliana"
+regular_tss <- metrics_eco_result %>%
+  filter(metric.eval == "TSS") %>%
+  group_by(species, id) %>%
+  summarise(TSS = mean(calibration), .groups = "drop")
 
-metrics_result<-rbind(tha_metrics,alp_metrics)
-metrics_result$Species <- factor(metrics_result$Species, levels = c("A. thaliana", "A. alpina"))
-
-# Check normality for A. thaliana
-shapiro.test(metrics_result$validation[metrics_result$Species == "A. alpina"])
-
-#
-
-# If the data is NOT normal we can proceed with wilcox test
-wilcox_test<-wilcox.test(validation ~ Species, data = metrics_result, paired=T)
-p_value <- wilcox_test$p.value
-
-mean_vals <- metrics_result %>%
-  group_by(Species, algo) %>%
-  summarise(mean_validation = mean(validation), .groups = "drop")
+extreme_tss <- metrics_extreme_result %>%
+  filter(metric.eval == "TSS") %>%
+  group_by(species, id) %>%
+  summarise(TSS = mean(calibration), .groups = "drop")
 
 
+library(tidyr)
+
+# paired test Regular (n = 15)
+regular_wide <- regular_tss %>%
+  pivot_wider(names_from = species, values_from = TSS)
+
+wilcox.test(regular_wide$alpina,
+            regular_wide$thaliana,
+            paired = TRUE)
+
+# paired test Extreme (n = 9)
+extreme_wide <- extreme_tss %>%
+  pivot_wider(names_from = species, values_from = TSS)
+
+wilcox.test(extreme_wide$alpina,
+            extreme_wide$thaliana,
+            paired = TRUE)
+
+#Plot
+library(dplyr)
+library(ggplot2)
+
+# Rename datasets
+regular_tss2 <- regular_tss %>% mutate(dataset = "Seasonal-climate")
+extreme_tss2 <- extreme_tss %>% mutate(dataset = "Extreme-climate")
+
+combined <- bind_rows(regular_tss2, extreme_tss2)
+
+# Order
+combined$species <- factor(combined$species, levels = c("alpina", "thaliana"))
+combined$dataset <- factor(combined$dataset,
+                           levels = c("Seasonal-climate", "Extreme-climate"))
+
+p<-ggplot(combined, aes(x = species, y = TSS, group = id)) +
+  
+  # paired lines
+  geom_line(aes(color = species), alpha = 0.35, linewidth = 0.6) +
+  
+  # points
+  geom_point(aes(fill = species, color = species),
+             shape = 21, size = 2, stroke = 0.4) +
+  
+  facet_wrap(~ dataset, nrow = 1) +
+  coord_cartesian(ylim = c(0.5, 1)) +
+  
+  # Italic species names
+  scale_x_discrete(labels = c(
+    "alpina"   = expression(italic("A.")~italic("alpina")),
+    "thaliana" = expression(italic("A.")~italic("thaliana"))
+  )) +
+  
+  # Consistent colours
+  scale_fill_manual(values = c(
+    "alpina"   = "#2C7BB6",
+    "thaliana" = "#D95F02"
+  )) +
+  scale_color_manual(values = c(
+    "alpina"   = "#2166AC",
+    "thaliana" = "#D95F02"
+  )) +
+  
+  labs(x = " ", y = "TSS") +
+  
+  theme_classic(base_size = 9) +
+  theme(
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.6),
+    axis.ticks = element_line(linewidth = 0.6),
+    axis.ticks.length = unit(1.5, "mm"),
+    
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x  = element_text(margin = margin(t = 4), size = 8),
+    axis.text.y  = element_text(size = 8),
+    
+    legend.position = "none"
+  )
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/tss_seasonal_extreme.pdf",plot = p, width = 80, height = 80, units = "mm", device = cairo_pdf)
 
 
-ggplot(mean_vals, aes(x = Species, y = mean_validation)) +
-  geom_boxplot() +
-  geom_jitter(alpha=0.5, colour='blue') +
-  theme_minimal()+
-  scale_y_continuous(limits = c(0.5, 1),breaks=seq(0.5,1,0.25)) +
-  labs(
-    title = "",
-    x = "",
-    y = "") +
-  theme(axis.text.x = element_text(hjust = 1,
-                                   face = "bold", color="black", 
-                                   size = 10),
-        axis.text.y = element_text(face = "bold", color="black", 
-                                   size = 10))
+# SUMMARY
+combined %>%
+  group_by(dataset, species) %>%
+  summarise(
+    mean_TSS = mean(TSS),
+    sd_TSS   = sd(TSS),
+    n        = n(),
+    .groups = "drop"
+  )
+
+summary_stats
+
+
+##################################      CLIMATE VARIMP- SEASONAL         ######################################################################
+head(tha_varimp)
+head(alp_varimp)
+
+library(dplyr)
+library(ggplot2)
+
+
+seasonal_imp <- bind_rows(alp_varimp, tha_varimp) %>%
+  mutate(dataset = "Seasonal Climate")
+
+# Optional: order variables by overall mean importance
+var_order <- seasonal_imp %>%
+  group_by(expl.var) %>%
+  summarise(m = mean(mean.var.imp, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(m)) %>%
+  pull(expl.var)
+
+seasonal_imp$expl.var <- factor(seasonal_imp$expl.var, levels = var_order)
+
+# --- Plot ---
+p<-ggplot(seasonal_imp,
+            aes(x = expl.var, y = mean.var.imp, fill = species)) +
+  geom_boxplot(
+    position = position_dodge(width = 0.75),
+    width = 0.6,
+    alpha = 0.6,
+    linewidth = 0.3,
+    outlier.shape = NA
+  ) +
+  geom_jitter(
+    aes(color = species),
+    position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.75),
+    alpha = 0.9,
+    size = 0.8
+  ) +
+  scale_fill_manual(
+    values = c("alpina" = "#2C7BB6", "thaliana" = "#D95F02"),
+    labels = c(
+      "alpina"   = expression(italic("A.")~italic("alpina")),
+      "thaliana" = expression(italic("A.")~italic("thaliana"))
+    ),
+    name = "Species"
+  ) +
+  scale_color_manual(
+    values = c("alpina" = "#2166AC", "thaliana" = "#D95F02"),
+    labels = c(
+      "alpina"   = expression(italic("A.")~italic("alpina")),
+      "thaliana" = expression(italic("A.")~italic("thaliana"))
+    ),
+    name = "Species"
+  ) +
+  labs(x = " ", y = "Mean variable importance (%)") +
+  theme_minimal(base_size = 8) +
+  theme(
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.6),
+    axis.ticks = element_line(linewidth = 0.6),
+    axis.ticks.length = unit(1.5, "mm"),
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x  = element_text(angle = 45, hjust = 1,
+                                margin = margin(t = 4), size = 7),
+    axis.text.y  = element_text(size = 7),
+    legend.position = "top"
+  )
+
+p
+
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/varimp_seasonal.pdf",plot = p, width = 100, height = 90, units = "mm", device = cairo_pdf)
+
+
+##################################     CLIMATE VARIMP- EXTREME          ######################################################################
+
+head(tha_varimp)
+head(alp_varimp)
+
+library(dplyr)
+library(ggplot2)
+
+
+extreme_imp <- bind_rows(alp_varimp, tha_varimp) %>%
+  mutate(dataset = "Extreme Climate")
+
+
+# Optional: order variables by overall mean importance
+var_order <- extreme_imp  %>%
+  group_by(expl.var) %>%
+  summarise(m = mean(mean.var.imp, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(m)) %>%
+  pull(expl.var)
+
+extreme_imp$expl.var <- factor(extreme_imp$expl.var, levels = var_order)
+
+
+# --- Plot ---
+p<-ggplot(extreme_imp,
+          aes(x = expl.var, y = mean.var.imp, fill = species)) +
+  geom_boxplot(
+    position = position_dodge(width = 0.75),
+    width = 0.6,
+    alpha = 0.6,
+    linewidth = 0.3,
+    outlier.shape = NA
+  ) +
+  geom_jitter(
+    aes(color = species),
+    position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.75),
+    alpha = 0.9,
+    size = 0.8
+  ) +
+  scale_fill_manual(
+    values = c("alpina" = "#2C7BB6", "thaliana" = "#D95F02"),
+    labels = c(
+      "alpina"   = expression(italic("A.")~italic("alpina")),
+      "thaliana" = expression(italic("A.")~italic("thaliana"))
+    ),
+    name = "Species"
+  ) +
+  scale_color_manual(
+    values = c("alpina" = "#2166AC", "thaliana" = "#D95F02"),
+    labels = c(
+      "alpina"   = expression(italic("A.")~italic("alpina")),
+      "thaliana" = expression(italic("A.")~italic("thaliana"))
+    ),
+    name = "Species"
+  ) +
+  labs(x = " ", y = "Mean variable importance (%)") +
+  theme_minimal(base_size = 8) +
+  theme(
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.6),
+    axis.ticks = element_line(linewidth = 0.6),
+    axis.ticks.length = unit(1.5, "mm"),
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x  = element_text(angle = 45, hjust = 1,
+                                margin = margin(t = 4), size = 7),
+    axis.text.y  = element_text(size = 7),
+    legend.position = "top"
+  )
+
+p
+
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/varimp_extreme.pdf",plot = p, width = 100, height = 90, units = "mm", device = cairo_pdf)
 
 ##########################################################################################################################
-##########################################################################################################################
+
+#####################   SOIL and TOPO METRICS  #########################################
+
+# TOPO
+head(alp_topo_metrics)
+head(tha_topo_metrics) 
 
 
+# Combine
+df_all_topo <- bind_rows(alp_topo_metrics, tha_topo_metrics) %>% filter(metric.eval=="TSS")
+
+
+# (Optional) nicer ordering
+df_all_topo$species <- factor(df_all_topo$species, levels = c("alpina","thaliana"))
+
+
+# 3) Plot: two boxes per metric, faceted by metric
+p<-ggplot(df_all_topo, aes(x = species, y = validation,fill = species)) +
+  geom_boxplot(width = 0.55,alpha = 0.6) +
+  geom_jitter(aes(color = species), width = 0.12, alpha = 1, size = 0.9)+
+  coord_cartesian(ylim = c(0.25, 1)) +
+  labs(x = " ", y = "TSS") +
+  scale_x_discrete(
+    labels = c(
+      "thaliana" = expression(italic("A.")~italic("thaliana")),
+      "alpina"   = expression(italic("A.")~italic("alpina"))
+    )
+  ) + 
+  # Consistent species colours
+  scale_fill_manual(values = c(
+    "alpina"   =  "#2C7BB6",
+    "thaliana" =  "#D95F02"
+  )) +
+  scale_color_manual(values = c(
+    "alpina"   = "#2166AC",
+    "thaliana" = "#D95F02"
+  )) +
+  theme_classic(base_size = 9) +
+  theme( 
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.6),
+    axis.ticks = element_line(linewidth = 0.6),
+    axis.ticks.length = unit(1.5, "mm"),
+    
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x  = element_text(margin = margin(t = 4),size = 8),
+    axis.text.y  = element_text(size = 8),
+    
+    legend.position = "none"
+  )
+
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/tss_topo.pdf",plot = p, width = 80, height = 80, units = "mm", device = cairo_pdf)
+
+
+
+
+# STATISTICAL SIGNIFICANCE
+library(dplyr)
+df_test <- df_all_topo %>%
+  filter(metric.eval == "TSS") %>%
+  filter(!is.na(validation))
+
+# Wilcoxon rank-sum (Mann–Whitney U)
+wilc <- wilcox.test(validation ~ species, data = df_test, exact = FALSE)
+
+# Useful descriptive stats
+summ <- df_test %>%
+  group_by(species) %>%
+  summarise(
+    n = n(),
+    median = median(validation),
+    mean = mean(validation),
+    sd = sd(validation),
+    .groups = "drop"
+  )
+
+wilc
+summ
+
+
+# SOIL
+head(alp_soil_metrics)
+head(tha_soil_metrics) 
+
+
+# Combine
+df_all_soil <- bind_rows(alp_soil_metrics, tha_soil_metrics) %>% filter(metric.eval=="TSS")
+
+
+# (Optional) nicer ordering
+df_all_soil$species <- factor(df_all_soil$species, levels = c("alpina","thaliana"))
+
+
+# 3) Plot: two boxes per metric, faceted by metric
+p<-ggplot(df_all_soil, aes(x = species, y = validation,fill = species)) +
+  geom_boxplot(width = 0.55,alpha = 0.6) +
+  geom_jitter(aes(color = species), width = 0.12, alpha = 1, size = 0.9)+
+  coord_cartesian(ylim = c(0.25, 1)) +
+  labs(x = " ", y = "TSS") +
+  scale_x_discrete(
+    labels = c(
+      "thaliana" = expression(italic("A.")~italic("thaliana")),
+      "alpina"   = expression(italic("A.")~italic("alpina"))
+    )
+  ) + 
+  # Consistent species colours
+  scale_fill_manual(values = c(
+    "alpina"   =  "#2C7BB6",
+    "thaliana" =  "#D95F02"
+  )) +
+  scale_color_manual(values = c(
+    "alpina"   = "#2166AC",
+    "thaliana" = "#D95F02"
+  )) +
+  theme_classic(base_size = 9) +
+  theme( 
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.6),
+    axis.ticks = element_line(linewidth =0.6 ),
+    axis.ticks.length = unit(1.5, "mm"),
+    
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x  = element_text(margin = margin(t = 4),size = 8),
+    axis.text.y  = element_text(size = 8),
+    
+    legend.position = "none"
+  )
+
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/tss_soil.pdf",plot = p, width = 80, height = 80, units = "mm", device = cairo_pdf)
+
+
+
+# STATISTICAL SIGNIFICANCE
+library(dplyr)
+df_test <- df_all_soil %>%
+  filter(metric.eval == "TSS") %>%
+  filter(!is.na(validation))
+
+# Wilcoxon rank-sum (Mann–Whitney U)
+wilc <- wilcox.test(validation ~ species, data = df_test, exact = FALSE)
+
+# Useful descriptive stats
+summ <- df_test %>%
+  group_by(species) %>%
+  summarise(
+    n = n(),
+    median = median(validation),
+    mean = mean(validation),
+    sd = sd(validation),
+    .groups = "drop"
+  )
+
+wilc
+summ
+
+
+
+######################   SOIL and TOPO VARIABLE IMPORTANCE  #########################################
+
+#SOIL
+head(alp_soil_varimp)
+head(tha_soil_varimp)
+
+soil_varimp <- bind_rows(alp_soil_varimp, tha_soil_varimp) %>% rename()
+  
+
+p<-ggplot(soil_varimp, aes(x = expl.var, y = var.imp,  fill = species)) +
+  geom_boxplot(width = 0.55,linewidth = 0.2) +
+  scale_y_continuous(breaks = seq(0, 100, by = 20)) +
+  coord_cartesian(ylim = c(0, 100)) +   # zoom without dropping
+  
+  # for soil
+  scale_x_discrete(labels = c("cfvo15" = "coarse fragments", "clay15" = "clay","nitrogen15" = "nitrogen","phh2o15" = "ph","silt15" = "silt")) +
+  
+  labs(x = " ", y = "Importance (%)") +
+  scale_fill_manual(
+    name = "Species",   # legend title
+    values = c(
+      "alpina"   =  "#2C7BB6",
+      "thaliana" =  "#D95F02"),
+    labels = c(
+      "alpina"   = expression(italic("A.")~italic("alpina")),
+      "thaliana" = expression(italic("A.")~italic("thaliana"))
+      )) +
+  theme_classic(base_size = 9) +
+  theme( 
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.5),
+    axis.ticks = element_line(linewidth = 0.5),
+    axis.ticks.length = unit(1.5, "mm"),
+    
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x  = element_text(margin = margin(t = 4),size = 8),
+    axis.text.y  = element_text(size = 8),
+    
+    legend.position="none"
+    
+    
+  )
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/varimp_soil.pdf",plot = p, width = 130, height = 100, units = "mm", device = cairo_pdf)
+
+# FIND THE MEAN VALUES
+soil_varimp %>%
+  group_by(species, expl.var) %>%
+  summarise(
+    mean_importance = mean(var.imp, na.rm = TRUE),
+    sd_importance   = sd(var.imp, na.rm = TRUE),
+    n               = n(),
+    .groups = "drop"
+  )
+
+
+
+# TOPO
+head(alp_topo_varimp)
+head(tha_topo_varimp)
+
+topo_varimp <- bind_rows(alp_topo_varimp, tha_topo_varimp) %>% rename()
+
+
+p<-ggplot(topo_varimp, aes(x = expl.var, y = var.imp,  fill = species)) +
+  geom_boxplot(width = 0.55,linewidth = 0.2) +
+  scale_y_continuous(breaks = seq(0, 100, by = 20)) +
+  coord_cartesian(ylim = c(0, 100)) +   # zoom without dropping
+  
+  # for topo
+  scale_x_discrete(labels = c("elev" = "elevation", "TPI" = "position index","TRI" = "ruggedness index")) +
+  
+  labs(x = " ", y = "Importance (%)") +
+  scale_fill_manual(
+    name = "Species",   # legend title
+    values = c(
+      "alpina"   =  "#2C7BB6",
+      "thaliana" =  "#D95F02"),
+    labels = c(
+      "alpina"   = expression(italic("A.")~italic("alpina")),
+      "thaliana" = expression(italic("A.")~italic("thaliana"))
+    )) +
+  theme_classic(base_size = 9) +
+  theme( 
+    text = element_text(family = "Arial"),
+    axis.line  = element_line(linewidth = 0.5),
+    axis.ticks = element_line(linewidth = 0.5),
+    axis.ticks.length = unit(1.5, "mm"),
+    
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x  = element_text(margin = margin(t = 4),size = 8),
+    axis.text.y  = element_text(size = 8),
+    
+    legend.key.size = unit(4, "mm")
+    
+  )
+
+ggsave("/Users/sansari/Desktop/chapter3-sdm/figures/varimp_topo.pdf",plot = p, width = 130, height = 100, units = "mm", device = cairo_pdf)
+
+
+# FIND THE MEAN VALUES
+topo_varimp %>%
+  group_by(species, expl.var) %>%
+  summarise(
+    mean_importance = mean(var.imp, na.rm = TRUE),
+    sd_importance   = sd(var.imp, na.rm = TRUE),
+    n               = n(),
+    .groups = "drop"
+  )
 
 
